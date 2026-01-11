@@ -9,6 +9,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
+      <Text>Index screen. Would be camera mode.</Text>
       <Text>Edit app/index.tsx to edit this screen.</Text>
     </View>
   );
