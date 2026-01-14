@@ -1,5 +1,7 @@
-import { Text, Image, View, FlatList, StyleSheet } from "react-native";
-import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { Text, Image, View, Button, Alert, FlatList, StyleSheet } from "react-native";
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { Directory, Paths } from 'expo-file-system';
 
 const DATA = [
   {
@@ -11,6 +13,19 @@ const DATA = [
     img: 'qwer',
   },
 ];
+
+async function queryFiles() {
+  const documentsDirectory = Paths.document;
+
+  const files = documentsDirectory.list();
+  Alert.alert("N of files: ${files.length}");
+  let msg = 'Files:\n';
+  for await (const file of files) {
+    msg += `${file.name}\n`;
+  }
+  Alert.alert(msg);
+  return msg
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -28,28 +43,35 @@ const styles = StyleSheet.create({
   },
 });
 
-type ItemProps = {filename: string, img_label: string};
-const Item = ({filename,img_label}: ItemProps) => (
+type ItemProps = { filename: string, img_label: string };
+const Item = ({ filename, img_label }: ItemProps) => (
   <View style={styles.item}>
-    
+
     {/* <Image style={styles.title} source={require('@expo/snack-static/react-native-logo.png')}></Image> */}
     <Text style={styles.title}>{img_label}</Text>
     <Text style={styles.title}>{filename}</Text>
   </View>
 );
 
-const App = () => (
+const FlatListViewer = () => (
   <SafeAreaProvider>
     <SafeAreaView style={styles.container}>
       <FlatList
         data={DATA}
-        renderItem={({item}) => <Item filename={item.file_stem} img_label={item.img} />}
+        renderItem={({ item }) => <Item filename={item.file_stem} img_label={item.img} />}
       />
     </SafeAreaView>
   </SafeAreaProvider>
 );
 
 export default function Gallery() {
+  const [miniConsoleText, setMiniConsoleText] = useState('Hello from mini console!');
+
+  async function updateMiniConsole() {
+    const txt = await queryFiles();
+    setMiniConsoleText(txt);
+  }
+
   return (
     <View
       style={{
@@ -59,8 +81,12 @@ export default function Gallery() {
       }}
     >
       <Text>Gallery.</Text>
-      <Text>Edit app/gallery.tsx to edit this screen.</Text>
-      <App></App>
+      <FlatListViewer></FlatListViewer>
+      <Text>MiniConsoleText{`\n`}.{miniConsoleText}</Text>
+      <Button title="Query files in storage"
+        color="#e30808"
+        onPress={() => updateMiniConsole()}>
+      </Button>
     </View>
   );
 }
