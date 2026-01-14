@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Text, Image, View, Button, Alert, FlatList, StyleSheet } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { Directory, Paths } from 'expo-file-system';
+import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
 
 const DATA = [
   {
@@ -15,12 +16,11 @@ const DATA = [
 ];
 
 async function queryFiles() {
-  const documentsDirectory = Paths.document;
-
-  const files = documentsDirectory.list();
-  Alert.alert("N of files: ${files.length}");
+  const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
+  const filesList = ticketsDirectory.list();
+  Alert.alert("N of files: " + filesList.length);
   let msg = 'Files:\n';
-  for await (const file of files) {
+  for await (const file of filesList) {
     msg += `${file.name}\n`;
   }
   Alert.alert(msg);
