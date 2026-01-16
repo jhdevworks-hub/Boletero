@@ -4,16 +4,7 @@ import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { Directory, Paths } from 'expo-file-system';
 import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
 
-const DATA = [
-  {
-    file_stem: 'boleta1',
-    img: 'asdf',
-  },
-  {
-    file_stem: 'boleta2',
-    img: 'qwer',
-  },
-];
+
 
 async function queryFiles() {
   const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
@@ -27,49 +18,66 @@ async function queryFiles() {
   return msg
 }
 
+
+async function getListOfFilesInStorage() {
+  const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
+  const filesList = ticketsDirectory.list();
+  return filesList;
+}
+
 const styles = StyleSheet.create({
-  container: {
+  listContainer: {
     flex: 1,
     // marginTop: StatusBar.currentHeight || 0,
   },
-  item: {
-    backgroundColor: '#f9c2ff',
+  itemView: {
+    flexDirection: 'row',
+    backgroundColor: '#5a5a5a',
     padding: 20,
     marginVertical: 8,
     marginHorizontal: 16,
   },
-  title: {
-    fontSize: 32,
+  itemImgPlaceholderText: {
+    fontSize: 8,
+  },
+  itemText: {
+    fontSize: 16,
   },
 });
 
-type ItemProps = { filename: string, img_label: string };
-const Item = ({ filename, img_label }: ItemProps) => (
-  <View style={styles.item}>
+type ItemProps = { filename: string };
 
-    {/* <Image style={styles.title} source={require('@expo/snack-static/react-native-logo.png')}></Image> */}
-    <Text style={styles.title}>{img_label}</Text>
-    <Text style={styles.title}>{filename}</Text>
+const Item = ({ filename }: ItemProps) => (
+  <View style={styles.itemView} >
+    {/* <Image style={styles.itemText} source={require('@expo/snack-static/react-native-logo.png')}></Image> */}
+    <Text style={styles.itemImgPlaceholderText}>Image here</Text>
+    <Text style={styles.itemText}>{filename}</Text>
   </View>
-);
-
-const FlatListViewer = () => (
-  <SafeAreaProvider>
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={DATA}
-        renderItem={({ item }) => <Item filename={item.file_stem} img_label={item.img} />}
-      />
-    </SafeAreaView>
-  </SafeAreaProvider>
 );
 
 export default function Gallery() {
   const [miniConsoleText, setMiniConsoleText] = useState('Hello from mini console!');
+  const [listData, setListData] = useState([
+    { id: 1, file_stem: "ItemPlaceholder1" },
+    { id: 2, file_stem: "ItemPlaceholder2" }]);
 
+    async function updateViews(){
+      await updateMiniConsole();
+      await updateList();
+    }
+  
   async function updateMiniConsole() {
     const txt = await queryFiles();
     setMiniConsoleText(txt);
+  }
+
+  async function updateList() {
+    const filesList = await getListOfFilesInStorage();
+    let itemsList: Array<{ id: number, file_stem: string }> = [];
+    filesList.forEach((file, i) => {
+      itemsList.push({ id: i, file_stem: file.name });
+    });
+    setListData(itemsList);
   }
 
   return (
@@ -80,12 +88,18 @@ export default function Gallery() {
         alignItems: "center",
       }}
     >
-      <Text>Gallery.</Text>
-      <FlatListViewer></FlatListViewer>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.listContainer}>
+          <FlatList
+            data={listData}
+            renderItem={({ item }) => <Item filename={item.file_stem} />}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
       <Text>MiniConsoleText{`\n`}.{miniConsoleText}</Text>
       <Button title="Query files in storage"
         color="#e30808"
-        onPress={() => updateMiniConsole()}>
+        onPress={() => updateViews()}>
       </Button>
     </View>
   );
