@@ -28,19 +28,23 @@ async function getListOfFilesInStorage() {
 const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
-    // marginTop: StatusBar.currentHeight || 0,
+    backgroundColor: '#dbdbdb',
   },
   itemView: {
     flexDirection: 'row',
     backgroundColor: '#5a5a5a',
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
+    padding: 3,
+    marginVertical: 2,
+    marginHorizontal: 3,
+    alignItems: 'center',
   },
   itemImgPlaceholderText: {
+    flex: 1,
     fontSize: 8,
+    height: 50,
   },
   itemText: {
+    flex: 6,
     fontSize: 16,
   },
 });
@@ -61,11 +65,11 @@ export default function Gallery() {
     { id: 1, file_stem: "ItemPlaceholder1" },
     { id: 2, file_stem: "ItemPlaceholder2" }]);
 
-    async function updateViews(){
-      await updateMiniConsole();
-      await updateList();
-    }
-  
+  async function updateViews() {
+    await updateMiniConsole();
+    await updateList();
+  }
+
   async function updateMiniConsole() {
     const txt = await queryFiles();
     setMiniConsoleText(txt);
@@ -81,26 +85,18 @@ export default function Gallery() {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.listContainer}>
-          <FlatList
-            data={listData}
-            renderItem={({ item }) => <Item filename={item.file_stem} />}
-          />
-        </SafeAreaView>
-      </SafeAreaProvider>
-      <Text>MiniConsoleText{`\n`}.{miniConsoleText}</Text>
-      <Button title="Query files in storage"
-        color="#e30808"
-        onPress={() => updateViews()}>
-      </Button>
-    </View>
+    <SafeAreaProvider>
+      <SafeAreaView>
+        <FlatList
+          data={listData}
+          renderItem={({ item }) => <Item filename={item.file_stem} />}
+        />
+        <Text>MiniConsoleText{`\n`}.{miniConsoleText}</Text>
+        <Button title="Query files in storage"
+          color="#e30808"
+          onPress={() => updateViews()}>
+        </Button>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
