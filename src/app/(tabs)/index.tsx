@@ -1,8 +1,9 @@
-import { Text, View, Button, Alert, Platform } from "react-native";
+import { Text, View, StyleSheet, Button, Alert, Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { File, Paths, Directory } from 'expo-file-system';
 import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
-
+import { CameraView, CameraMode, CameraType, useCameraPermissions } from 'expo-camera';
+import { useRef } from "react";
 
 async function generateFile() {
   try {
@@ -50,6 +51,25 @@ async function generateFile() {
 }
 
 export default function Index() {
+  const cameraType: CameraType = 'back';
+  const cameraMode: CameraMode = 'picture';
+  const [permission, requestPermission] = useCameraPermissions();
+
+  if (!permission) {
+    // Camera permissions are still loading.
+    return null;
+  }
+
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View>
+        <Text>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="grant permission" />
+      </View>
+    );
+  }
+
   return (
     <View
       style={{
@@ -58,7 +78,12 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Index screen. Would be camera mode.</Text>
+      <CameraView
+        style={styles.camera}
+        mode={cameraMode}
+        facing={cameraType}
+        />
+      <Text style={{ flex: 1 }}>Index screen. Would be camera mode.</Text>
       <Button title="Take picture (creates text file)"
         color="#e30808"
         onPress={() => generateFile()}>
@@ -66,3 +91,7 @@ export default function Index() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  camera: StyleSheet.absoluteFillObject
+});
