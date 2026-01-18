@@ -12,50 +12,48 @@ import {
 import { useRef, useState } from "react";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
-async function generateFile() {
-  try {
-    let exampleIndex = 0;
-    let formattedNumber = String(exampleIndex).padStart(2, "0");
-    let candidateFilename = `${EXAMPLE_PREFIX}${formattedNumber}.txt`;
 
-    // Check if ticket directories exist
-    const ticketsPermDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
-    if (!(ticketsPermDirectory.exists)) {
-      ticketsPermDirectory.create();
-    }
-    const ticketsCacheDirectory = new Directory(Paths.cache, TICKET_SUBDIR_NAME);
-    if (!(ticketsCacheDirectory.exists)) {
-      ticketsCacheDirectory.create();
-    }
-
-    // Create a new filename that does not exist yet
-    do {
-      const candidateUri = `${ticketsPermDirectory.uri}/${candidateFilename}`;
-      const candidateFile = new File(candidateUri);
-      const info = candidateFile.info();
-      if (!info.exists) break;
-      formattedNumber = String(exampleIndex).padStart(2, "0");
-      candidateFilename = `${EXAMPLE_PREFIX}${formattedNumber}.txt`;
-      exampleIndex++;
-    } while (true)
-
-    // Create the file in cache, write to it, then move to tickets folder
-    const cacheFile = new File(ticketsCacheDirectory, candidateFilename);
-    await cacheFile.create();
-    await cacheFile.write("Hello, world!");
-    const docFile = new File(ticketsPermDirectory, candidateFilename);
-    await cacheFile.move(docFile);
-
-    const msg = `Saved to ${docFile.uri}`;
-    if (Platform.OS === "web") window.alert(msg);
-    else Alert.alert("Saved", msg);
-  } catch (error) {
-    if (Platform.OS === "web") window.alert(String(error));
-    else Alert.alert("Error", String(error));
-    console.error(error);
+const copyToStorage = (uriInCache: string) => {
+  // Check if ticket directories exist
+  const ticketsPermDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
+  if (!(ticketsPermDirectory.exists)) {
+    ticketsPermDirectory.create();
   }
 
-}
+  // Get a unique filename in permanent storage
+  let filename = findNextFilename(ticketsPermDirectory, "boleta_", ".jpg");
+  if (!filename) {
+    throw new Error("Could not find a unique filename");
+  }
+
+  // Move file from cache to permanent storage 
+  const cacheFile = new File(uriInCache);
+  if (!cacheFile.exists) {
+    throw new Error("File to move does not exist: " + uriInCache);
+  }
+  const docFile = new File(ticketsPermDirectory, filename);
+  cacheFile.move(docFile);
+
+  return docFile.uri;
+};
+
+const findNextFilename = (directory: Directory, prefix: string, extension: string): string | null => {
+  let fileIndex = 0;
+  const maxPowerOfTen = 2;
+  const maxIndex = 10 ** maxPowerOfTen;
+  for (let fileIndex = 0; fileIndex < maxIndex; fileIndex++) {
+    let fileSuffix = String(fileIndex).padStart(maxPowerOfTen, "0");
+    let candidateFilename = `${prefix}${fileSuffix}${extension}`;
+    const candidateUri = `${directory.uri}/${candidateFilename}`;
+    const candidateFile = new File(candidateUri);
+    const info = candidateFile.info();
+    if (!info.exists) {
+      return candidateFilename;
+    };
+  }
+
+  return null;
+};
 
 export default function Index() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -82,7 +80,10 @@ export default function Index() {
 
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync();
-    if (photo?.uri) setUri(photo.uri);
+    if (photo?.uri) {
+      setUri(photo.uri);
+      copyToStorage(photo.uri);
+    }
   };
 
   const renderCamera = () => {
