@@ -1,9 +1,16 @@
-import { Text, View, StyleSheet, Button, Alert, Platform } from "react-native";
+import { Text, View, StyleSheet, Pressable, Button, Alert, Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { File, Paths, Directory } from 'expo-file-system';
 import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
-import { CameraView, CameraMode, CameraType, useCameraPermissions } from 'expo-camera';
-import { useRef } from "react";
+
+import {
+  CameraMode,
+  CameraType,
+  CameraView,
+  useCameraPermissions,
+} from "expo-camera";
+import { useRef, useState } from "react";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 async function generateFile() {
   try {
@@ -51,9 +58,11 @@ async function generateFile() {
 }
 
 export default function Index() {
+  const [permission, requestPermission] = useCameraPermissions();
+  const ref = useRef<CameraView>(null);
+  const [photoUri, setUri] = useState<string | null>(null);
   const cameraType: CameraType = 'back';
   const cameraMode: CameraMode = 'picture';
-  const [permission, requestPermission] = useCameraPermissions();
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -61,37 +70,103 @@ export default function Index() {
   }
 
   if (!permission.granted) {
-    // Camera permissions are not granted yet.
     return (
-      <View>
-        <Text>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
+      <View style={styles.message_container}>
+        <Text style={{ textAlign: "center" }}>
+          We need your permission to use the camera
+        </Text>
+        <Button onPress={requestPermission} title="Grant permission" />
       </View>
     );
   }
 
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <CameraView
-        style={styles.camera}
-        mode={cameraMode}
-        facing={cameraType}
+  const takePicture = async () => {
+    const photo = await ref.current?.takePictureAsync();
+    if (photo?.uri) setUri(photo.uri);
+  };
+
+  const renderCamera = () => {
+    return (
+      <View style={styles.cameraContainer}>
+        <Text style={{ flex: 1 }}>Last img path: {photoUri}</Text>
+        <CameraView
+          style={styles.camera}
+          ref={ref}
+          mode={'picture'}
+          facing={'back'}
         />
-      <Text style={{ flex: 1 }}>Index screen. Would be camera mode.</Text>
-      <Button title="Take picture (creates text file)"
-        color="#e30808"
-        onPress={() => generateFile()}>
-      </Button>
+        <View style={styles.shutterContainer}>
+          <Pressable onPress={takePicture}>
+            {({ pressed }) => (
+              <View
+                style={[
+                  styles.shutterBtn,
+                  {
+                    opacity: pressed ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.shutterBtnInner,
+                    {
+                      backgroundColor: "white",
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.main_container}>
+      {renderCamera()}
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  camera: StyleSheet.absoluteFillObject
+  main_container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+  },
+  message_container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cameraContainer: { flex: 1 },
+  camera: { flex: 10 },
+  shutterContainer: {
+    position: "absolute",
+    bottom: 44,
+    left: 0,
+    width: "100%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 30,
+  },
+  shutterBtn: {
+    backgroundColor: "transparent",
+    borderWidth: 5,
+    borderColor: "white",
+    width: 85,
+    height: 85,
+    borderRadius: 45,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shutterBtnInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 50,
+  },
 });
