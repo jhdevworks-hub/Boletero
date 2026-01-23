@@ -6,12 +6,12 @@ import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
 
 
 
-async function queryFiles() {
+function queryFiles() {
   const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
   const filesList = ticketsDirectory.list();
   Alert.alert("N of files: " + filesList.length);
   let msg = 'Files:\n';
-  for await (const file of filesList) {
+  for (const file of filesList) {
     msg += `${file.name}\n`;
   }
   Alert.alert(msg);
@@ -19,7 +19,7 @@ async function queryFiles() {
 }
 
 
-async function getListOfFilesInStorage() {
+function getListOfFilesInStorage() {
   const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
   const filesList = ticketsDirectory.list();
   return filesList;
@@ -65,18 +65,18 @@ export default function Gallery() {
     { id: 1, file_stem: "ItemPlaceholder1" },
     { id: 2, file_stem: "ItemPlaceholder2" }]);
 
-  async function updateViews() {
-    await updateMiniConsole();
-    await updateList();
+  function updateViews() {
+    updateMiniConsole();
+    updateList();
   }
 
-  async function updateMiniConsole() {
-    const txt = await queryFiles();
+  function updateMiniConsole() {
+    const txt = queryFiles();
     setMiniConsoleText(txt);
   }
 
-  async function updateList() {
-    const filesList = await getListOfFilesInStorage();
+  function updateList() {
+    const filesList = getListOfFilesInStorage();
     let itemsList: Array<{ id: number, file_stem: string }> = [];
     filesList.forEach((file, i) => {
       itemsList.push({ id: i, file_stem: file.name });
