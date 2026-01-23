@@ -29,18 +29,22 @@ const styles = StyleSheet.create({
   },
 });
 
-type ItemProps = { filename: string };
+type ItemProps = { file_uri: string; filename: string };
 
-const Item = ({ filename }: ItemProps) => (
+const Item = ({ file_uri, filename }: ItemProps) => (
   <View style={styles.itemView} >
-    <Text style={styles.itemImgPlaceholderText}>Image here</Text>
+    <Image
+      style={{ width: 50, height: 50, backgroundColor: '#a0a0a0' }}
+      // Placeholder image; replace with actual image source as needed
+      source={{ uri: file_uri }}
+    />
     <Text style={styles.itemText}>{filename}</Text>
   </View>
 );
 
 export default function Gallery() {
   const makeItemsFromFiles = (files: (Directory | File)[]) =>
-    files.map((file, i) => ({ id: i, file_stem: file.name }));
+    files.map((file, i) => ({ id: i, uri: file.uri, file_stem: file.name }));
 
   const makeItemsFromTicketsDirectory = () => {
     let ticketDir = new Directory(Paths.document, TICKET_SUBDIR_NAME);
@@ -50,22 +54,22 @@ export default function Gallery() {
   const [listData, setListData] = useState(makeItemsFromTicketsDirectory());
 
   useFocusEffect(
-      React.useCallback(() => {
-        // Do something when the screen is focused
-        setListData(makeItemsFromTicketsDirectory());
-        return () => {
-          // Do something when the screen is unfocused
-          // Useful for cleanup functions
-        };
-      }, [])
-    );
+    React.useCallback(() => {
+      // Do something when the screen is focused
+      setListData(makeItemsFromTicketsDirectory());
+      return () => {
+        // Do something when the screen is unfocused
+        // Useful for cleanup functions
+      };
+    }, [])
+  );
 
   return (
     <SafeAreaProvider>
       <SafeAreaView>
         <FlatList
           data={listData}
-          renderItem={({ item }) => <Item filename={item.file_stem} />}
+          renderItem={({ item }) => <Item file_uri={item.uri} filename={item.file_stem} />}
         />
       </SafeAreaView>
     </SafeAreaProvider>
