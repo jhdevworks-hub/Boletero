@@ -1,29 +1,8 @@
 import React, { useState } from 'react';
 import { Text, Image, View, Button, Alert, FlatList, StyleSheet } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
-import { Directory, Paths } from 'expo-file-system';
-import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
-
-
-
-function queryFiles() {
-  const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
-  const filesList = ticketsDirectory.list();
-  Alert.alert("N of files: " + filesList.length);
-  let msg = 'Files:\n';
-  for (const file of filesList) {
-    msg += `${file.name}\n`;
-  }
-  Alert.alert(msg);
-  return msg
-}
-
-
-function getListOfFilesInStorage() {
-  const ticketsDirectory = new Directory(Paths.document, TICKET_SUBDIR_NAME);
-  const filesList = ticketsDirectory.list();
-  return filesList;
-}
+import { Directory, File, Paths } from 'expo-file-system';
+import { TICKET_SUBDIR_NAME } from '../../constants';
 
 const styles = StyleSheet.create({
   listContainer: {
@@ -53,49 +32,33 @@ type ItemProps = { filename: string };
 
 const Item = ({ filename }: ItemProps) => (
   <View style={styles.itemView} >
-    {/* <Image style={styles.itemText} source={require('@expo/snack-static/react-native-logo.png')}></Image> */}
     <Text style={styles.itemImgPlaceholderText}>Image here</Text>
     <Text style={styles.itemText}>{filename}</Text>
   </View>
 );
 
 export default function Gallery() {
-  const [miniConsoleText, setMiniConsoleText] = useState('Hello from mini console!');
-  const [listData, setListData] = useState([
-    { id: 1, file_stem: "ItemPlaceholder1" },
-    { id: 2, file_stem: "ItemPlaceholder2" }]);
+  const makeItemsFromFiles = (files: (Directory | File)[]) =>
+    files.map((file, i) => ({ id: i, file_stem: file.name }));
 
-  function updateViews() {
-    updateMiniConsole();
-    updateList();
+  const makeItemsFromTicketsDirectory = () => {
+    let ticketDir = new Directory(Paths.document, TICKET_SUBDIR_NAME);
+    return makeItemsFromFiles(ticketDir.list());
   }
 
-  function updateMiniConsole() {
-    const txt = queryFiles();
-    setMiniConsoleText(txt);
-  }
-
-  function updateList() {
-    const filesList = getListOfFilesInStorage();
-    let itemsList: Array<{ id: number, file_stem: string }> = [];
-    filesList.forEach((file, i) => {
-      itemsList.push({ id: i, file_stem: file.name });
-    });
-    setListData(itemsList);
-  }
+  const [listData, setListData] = useState(makeItemsFromTicketsDirectory());
 
   return (
     <SafeAreaProvider>
       <SafeAreaView>
+        <Button title="Query files in storage"
+          color="#e30808"
+          onPress={() => setListData(makeItemsFromTicketsDirectory())}>
+        </Button>
         <FlatList
           data={listData}
           renderItem={({ item }) => <Item filename={item.file_stem} />}
         />
-        <Text>MiniConsoleText{`\n`}.{miniConsoleText}</Text>
-        <Button title="Query files in storage"
-          color="#e30808"
-          onPress={() => updateViews()}>
-        </Button>
       </SafeAreaView>
     </SafeAreaProvider>
   );

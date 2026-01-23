@@ -1,3 +1,3 @@
 # Todo list
-* Make the gallery list show the items in storage on first view.
+* Make the gallery list update when pics are taken.
 * Show the image as thumbnail for image files.
