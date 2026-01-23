@@ -3,6 +3,7 @@ import { Text, Image, View, Button, Alert, FlatList, StyleSheet } from "react-na
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { Directory, File, Paths } from 'expo-file-system';
 import { TICKET_SUBDIR_NAME } from '../../constants';
+import { useFocusEffect } from '@react-navigation/native';
 
 const styles = StyleSheet.create({
   listContainer: {
@@ -48,13 +49,20 @@ export default function Gallery() {
 
   const [listData, setListData] = useState(makeItemsFromTicketsDirectory());
 
+  useFocusEffect(
+      React.useCallback(() => {
+        // Do something when the screen is focused
+        setListData(makeItemsFromTicketsDirectory());
+        return () => {
+          // Do something when the screen is unfocused
+          // Useful for cleanup functions
+        };
+      }, [])
+    );
+
   return (
     <SafeAreaProvider>
       <SafeAreaView>
-        <Button title="Query files in storage"
-          color="#e30808"
-          onPress={() => setListData(makeItemsFromTicketsDirectory())}>
-        </Button>
         <FlatList
           data={listData}
           renderItem={({ item }) => <Item filename={item.file_stem} />}
