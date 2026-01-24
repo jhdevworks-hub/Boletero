@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Text, Image, View, Button, Alert, FlatList, StyleSheet } from "react-native";
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
-import { Directory, File, Paths } from 'expo-file-system';
-import { TICKET_SUBDIR_NAME } from '../../constants';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
+import { Directory, File, Paths } from 'expo-file-system';
+import React, { useState } from 'react';
+import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { TICKET_SUBDIR_NAME } from '../../constants';
 
 const styles = StyleSheet.create({
   listContainer: {
@@ -29,20 +30,47 @@ const styles = StyleSheet.create({
   },
 });
 
-type ItemProps = { file_uri: string; filename: string };
-
-const Item = ({ file_uri, filename }: ItemProps) => (
-  <View style={styles.itemView} >
-    <Image
-      style={{ width: 50, height: 50, backgroundColor: '#a0a0a0' }}
-      // Placeholder image; replace with actual image source as needed
-      source={{ uri: file_uri }}
-    />
-    <Text style={styles.itemText}>{filename}</Text>
-  </View>
-);
-
 export default function Gallery() {
+
+  type ItemProps = { file_uri: string; filename: string };
+
+  const showDeleteDialog = (file_uri: string, filename: string) => {
+    Alert.alert("Delete Confirmation", `Are you sure you want to delete ${filename}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const file = new File(file_uri);
+            file.delete();
+            file.exists ? Alert.alert("Error", `Could not delete ${filename}.`) :
+              Alert.alert("Deleted", `${filename} has been deleted.`);
+            refreshListData();
+          }
+        }
+      ]
+    );
+  };
+
+  const Item = ({ file_uri, filename }: ItemProps) => (
+    <View style={styles.itemView} >
+      <Image
+        style={{ width: 50, height: 50, backgroundColor: '#a0a0a0' }}
+        // Placeholder image; replace with actual image source as needed
+        source={{ uri: file_uri }}
+      />
+      <Text style={styles.itemText}>{filename}</Text>
+      <Pressable
+        onPress={() => showDeleteDialog(file_uri, filename)}>
+        <MaterialIcons size={28} name="delete" color={'#004bf9'} />
+      </Pressable>
+    </View>
+  );
+
   const makeItemsFromFiles = (files: (Directory | File)[]) =>
     files.map((file, i) => ({ id: i, uri: file.uri, file_stem: file.name }));
 
@@ -53,10 +81,14 @@ export default function Gallery() {
 
   const [listData, setListData] = useState(makeItemsFromTicketsDirectory());
 
+  function refreshListData() {
+    setListData(makeItemsFromTicketsDirectory());
+  }
+
   useFocusEffect(
     React.useCallback(() => {
       // Do something when the screen is focused
-      setListData(makeItemsFromTicketsDirectory());
+      refreshListData();
       return () => {
         // Do something when the screen is unfocused
         // Useful for cleanup functions
