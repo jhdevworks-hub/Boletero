@@ -1,10 +1,11 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Directory, File, Paths } from 'expo-file-system';
+import { useRouter } from "expo-router";
 import React, { useState } from 'react';
 import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { TICKET_SUBDIR_NAME } from '../../constants';
+import { TICKET_SUBDIR_NAME } from '../../../constants';
 
 const styles = StyleSheet.create({
   listContainer: {
@@ -31,8 +32,11 @@ const styles = StyleSheet.create({
 });
 
 export default function Gallery() {
+  const router = useRouter();
 
-  type ItemProps = { file_uri: string; filename: string };
+  const goToImageViewer = (image_uri: string) => {
+    router.push({ pathname: "/imageViewer", params: { image: image_uri } });
+  };
 
   const showDeleteDialog = (file_uri: string, filename: string) => {
     Alert.alert("Delete Confirmation", `Are you sure you want to delete ${filename}?`,
@@ -56,15 +60,20 @@ export default function Gallery() {
     );
   };
 
+  type ItemProps = { file_uri: string; filename: string };
+
   const Item = ({ file_uri, filename }: ItemProps) => (
     <View style={styles.itemView} >
-      <Image
-        style={{ width: 50, height: 50, backgroundColor: '#a0a0a0' }}
-        // Placeholder image; replace with actual image source as needed
-        source={{ uri: file_uri }}
-      />
-      <Text style={styles.itemText}>{filename}</Text>
-      <Pressable
+      <Pressable style={{ flex: 8, flexDirection: 'row', alignItems: 'center' }}
+        onPress={() => goToImageViewer(file_uri)}>
+        <Image
+          style={{ width: 50, height: 50, backgroundColor: '#a0a0a0' }}
+          // Placeholder image; replace with actual image source as needed
+          source={{ uri: file_uri }}
+        />
+        <Text style={styles.itemText}>{filename}</Text>
+      </Pressable>
+      <Pressable style={{ flex: 1, alignItems: 'center' }}
         onPress={() => showDeleteDialog(file_uri, filename)}>
         <MaterialIcons size={28} name="delete" color={'#004bf9'} />
       </Pressable>

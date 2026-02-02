@@ -1,5 +1,5 @@
-import { Tabs } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
@@ -12,7 +12,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="gallery"
+        name="(galleryStack)"
         options={{
           title: 'Galeria',
           tabBarIcon: ({ color }) => <MaterialIcons size={28} name="collections" color={color} />,
