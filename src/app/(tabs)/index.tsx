@@ -1,7 +1,6 @@
-import { Text, View, StyleSheet, Pressable, Button, Alert, Platform } from "react-native";
-import * as FileSystem from "expo-file-system";
-import { File, Paths, Directory } from 'expo-file-system';
-import { TICKET_SUBDIR_NAME, EXAMPLE_PREFIX } from '../../constants';
+import { Directory, File, Paths } from 'expo-file-system';
+import { Button, Pressable, StyleSheet, Text, View } from "react-native";
+import { TICKET_SUBDIR_NAME } from '../../constants';
 
 import {
   CameraMode,
@@ -10,7 +9,6 @@ import {
   useCameraPermissions,
 } from "expo-camera";
 import { useRef, useState } from "react";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 
 const copyToStorage = (uriInCache: string) => {
@@ -79,7 +77,7 @@ export default function Index() {
   }
 
   const takePicture = async () => {
-    const photo = await ref.current?.takePictureAsync();
+    const photo = await ref.current?.takePictureAsync({shutterSound: false});
     if (photo?.uri) {
       setUri(photo.uri);
       copyToStorage(photo.uri);
@@ -89,7 +87,6 @@ export default function Index() {
   const renderCamera = () => {
     return (
       <View style={styles.cameraContainer}>
-        <Text style={{ flex: 1 }}>Last img path: {photoUri}</Text>
         <CameraView
           style={styles.camera}
           ref={ref}
@@ -148,11 +145,10 @@ const styles = StyleSheet.create({
   shutterContainer: {
     position: "absolute",
     bottom: 44,
-    left: 0,
     width: "100%",
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 30,
   },
   shutterBtn: {
