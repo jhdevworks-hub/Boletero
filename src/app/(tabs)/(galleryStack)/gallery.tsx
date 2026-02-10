@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Directory, File, Paths } from 'expo-file-system';
 import { useRouter } from "expo-router";
 import React, { useState } from 'react';
-import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { TICKET_SUBDIR_NAME } from '../../../constants';
 
@@ -28,6 +28,10 @@ const styles = StyleSheet.create({
   itemText: {
     flex: 6,
     fontSize: 16,
+  },
+  sectionText: {
+    fontSize: 20,
+    fontWeight: 'bold'
   },
 });
 
@@ -85,7 +89,7 @@ export default function Gallery() {
 
   const makeItemsFromTicketsDirectory = () => {
     let ticketDir = new Directory(Paths.document, TICKET_SUBDIR_NAME);
-    return makeItemsFromFiles(ticketDir.list());
+    return [{ title: "Internal Tickets", data: makeItemsFromFiles(ticketDir.list()) }, { title: "External Tickets", data: [] }];
   }
 
   const [listData, setListData] = useState(makeItemsFromTicketsDirectory());
@@ -108,9 +112,12 @@ export default function Gallery() {
   return (
     <SafeAreaProvider>
       <SafeAreaView>
-        <FlatList
-          data={listData}
+        <SectionList
+          sections={listData}
           renderItem={({ item }) => <Item file_uri={item.uri} filename={item.file_stem} />}
+          renderSectionHeader={({ section: { title } }) => (
+            <Text style={styles.sectionText}>{title}</Text>
+          )}
         />
       </SafeAreaView>
     </SafeAreaProvider>
