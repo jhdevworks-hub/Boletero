@@ -36,12 +36,15 @@ const styles = StyleSheet.create({
 });
 
 export default function Gallery() {
+
+  // Photo viewer ------------------------------------
   const router = useRouter();
 
   const goToImageViewer = (image_uri: string) => {
     router.push({ pathname: "/imageViewer", params: { image: image_uri } });
   };
 
+  // Delete dialog ------------------------------------
   const showDeleteDialog = (file_uri: string, filename: string) => {
     Alert.alert("Delete Confirmation", `Are you sure you want to delete ${filename}?`,
       [
@@ -64,7 +67,10 @@ export default function Gallery() {
     );
   };
 
+  // List types and functions ------------------------------------
   type ItemProps = { file_uri: string; filename: string };
+  type ItemObject = { id: number; uri: string; file_stem: string };
+  type SectionObject = { title: string, data: ItemObject[] };
 
   const Item = ({ file_uri, filename }: ItemProps) => (
     <View style={styles.itemView} >
@@ -84,20 +90,24 @@ export default function Gallery() {
     </View>
   );
 
-  const makeItemsFromFiles = (files: (Directory | File)[]) =>
+  const makeItemsFromFiles = (files: (Directory | File)[]): ItemObject[] =>
     files.map((file, i) => ({ id: i, uri: file.uri, file_stem: file.name }));
 
-  const makeItemsFromTicketsDirectory = () => {
+  const makeItemsFromAppDirectory = (): ItemObject[] => {
     let ticketDir = new Directory(Paths.document, TICKET_SUBDIR_NAME);
-    return [{ title: "Internal Tickets", data: makeItemsFromFiles(ticketDir.list()) }, { title: "External Tickets", data: [] }];
+    return makeItemsFromFiles(ticketDir.list());
   }
 
-  const [listData, setListData] = useState(makeItemsFromTicketsDirectory());
+  const [sectionsData, setSectionsData] = useState<SectionObject[]>([]);
 
   function refreshListData() {
-    setListData(makeItemsFromTicketsDirectory());
+    setSectionsData([
+      { title: "Internal Tickets", data: makeItemsFromAppDirectory() },
+      { title: "External Tickets", data: [] }
+    ]);
   }
 
+  // List refresh on screen focus ------------------------------------
   useFocusEffect(
     React.useCallback(() => {
       // Do something when the screen is focused
@@ -113,7 +123,7 @@ export default function Gallery() {
     <SafeAreaProvider>
       <SafeAreaView>
         <SectionList
-          sections={listData}
+          sections={sectionsData}
           renderItem={({ item }) => <Item file_uri={item.uri} filename={item.file_stem} />}
           renderSectionHeader={({ section: { title } }) => (
             <Text style={styles.sectionText}>{title}</Text>
