@@ -1,8 +1,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Directory, File, Paths } from 'expo-file-system';
+import { Album, Asset, createAlbumAsync, createAssetAsync, getAlbumAsync, getAlbumsAsync, getAssetsAsync, usePermissions } from 'expo-media-library';
 import { useRouter } from "expo-router";
-import React, { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Image, Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { TICKET_SUBDIR_NAME } from '../../../constants';
@@ -100,16 +101,95 @@ export default function Gallery() {
 
   const [sectionsData, setSectionsData] = useState<SectionObject[]>([]);
 
-  function refreshListData() {
-    setSectionsData([
-      { title: "Internal Tickets", data: makeItemsFromAppDirectory() },
-      { title: "External Tickets", data: [] }
-    ]);
+
+  // Photo album storage ------------------------------------
+  const [permissionResponse, requestPermission] = usePermissions();
+  const albumName = "Boletas";
+
+  async function getPermanentAlbum(name: string) {
+
+    if (permissionResponse?.status !== 'granted') {
+      if (permissionResponse?.status === 'denied') {
+        console.log('Media library permission was denied');
+      }
+      else if (permissionResponse?.status === 'undetermined') {
+        console.log('Media library permission is undetermined, requesting permission');
+      }
+
+      await requestPermission();
+    }
+    const fetchedAlbum = await getAlbumAsync(
+      name
+    );
+
+    return fetchedAlbum;
   }
+
+  const makeItemsFromAssets = (assets: Asset[]): ItemObject[] =>
+    assets.map((asset, i) => ({ id: i, uri: asset.uri, file_stem: asset.filename }));
+
+  const createBoletasAlbum = async (): Promise<Album | null> => {
+    const dummyFileName = "dummy.jpg";
+    const dummyFileUri = `${Paths.cache.uri}${dummyFileName}`;
+    console.log('Creating dummy asset with URI: ', dummyFileUri);
+    const dummyFile = new File(dummyFileUri);
+    dummyFile.write("This is a dummy file for album creation.");
+    try {
+      const asset = await createAssetAsync(dummyFileUri);
+      const album = await createAlbumAsync(albumName, asset, false);
+      return album;
+    } catch (error) {
+      console.log('Error creating album from dummy file: ', error);
+      return null;
+    }
+  };
+
+  const getAssetsFromAlbum = async (): Promise<Asset[]> => {
+    try {
+      const album = await getPermanentAlbum(albumName);
+      if (album) {
+        const result = await getAssetsAsync({ album: album });
+        // Remove the dummy asset if it exists
+        const filteredAssets = result.assets.filter(asset => asset.filename !== "dummy.jpg");
+        if (filteredAssets.length !== result.assets.length) {
+          console.log('Dummy asset found and removed from assets list.');
+        }
+        return filteredAssets;
+      }
+      return [];
+    } catch (error) {
+      Alert.alert("Error", `Could not access album ${albumName}.`);
+      return [];
+    }
+  };
+
+  async function refreshListData() {
+    try {
+      const albums = await getAlbumsAsync();
+      const boletasAlbum = albums.find(album => album.title === "Boletas");
+      if (!boletasAlbum) {
+        console.log('Boletas album not found, attempting to create it.');
+        await createBoletasAlbum();
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not fetch albums.");
+    }
+
+    try {
+      getAssetsFromAlbum().then(assets => {
+        setSectionsData([
+          { title: "Internal Tickets", data: makeItemsFromAppDirectory() },
+          { title: "External Tickets", data: makeItemsFromAssets(assets) }
+        ]);
+      });
+    } catch (error) {
+      Alert.alert("Error", "Could not refresh list data.");
+    }
+  };
 
   // List refresh on screen focus ------------------------------------
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       // Do something when the screen is focused
       refreshListData();
       return () => {
